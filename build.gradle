@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'info.solidsoft.pitest' version '1.5.1'
+}
+
+group 'kata'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.+'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation 'org.assertj:assertj-core:3.+'
+}
+
+pitest {
+    junit5PluginVersion = '0.12'
+    threads = 2
+    outputFormats = ['HTML']
+}
+
+test {
+    useJUnitPlatform()
+}
