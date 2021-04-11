@@ -15,9 +15,9 @@
   "author": "mOuLiNeX",
   "license": "UNLICENSED",
   "dependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^8.2.1",
-    "nyc": "^15.1.0"
+    "chai": "4.x",
+    "mocha": "8.x",
+    "nyc": "15.x"
   },
   "nyc": {
     "include": [
