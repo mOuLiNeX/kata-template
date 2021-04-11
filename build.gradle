@@ -1,7 +1,9 @@
 plugins {
     id 'java'
     id 'jacoco'
-    id 'info.solidsoft.pitest' version '1.5.1'
+    id 'info.solidsoft.pitest' version '1.6.0'
+    id "org.sonarqube" version "3.1.1"
+    id "com.github.ben-manes.versions" version "0.38.0"
 }
 
 group 'kata'
@@ -9,11 +11,18 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 jacocoTestReport {
     dependsOn test // tests are required to run before generating the report
+    reports {
+        xml {
+            enabled true
+            destination file("${buildDir}/reports/jacoco/report.xml")
+        }
+        html.enabled true
+        csv.enabled false
+    }
 }
 
 dependencies {
@@ -30,4 +39,28 @@ pitest {
 
 test {
     useJUnitPlatform()
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "kata-template"
+        property "sonar.coverage.jacoco.xmlReportPaths", "$buildDir/reports/jacoco/report.xml"
+    }
+}
+
+
+apply plugin: 'com.github.ben-manes.versions'
+
+// To disallow release candidates as upgradable versions
+dependencyUpdates.resolutionStrategy {
+    componentSelection { rules ->
+        rules.all { ComponentSelection selection ->
+            boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'preview'].any { qualifier ->
+                selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
+            }
+            if (rejected) {
+                selection.reject('Release candidate')
+            }
+        }
+    }
 }
