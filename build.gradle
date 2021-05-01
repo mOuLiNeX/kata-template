@@ -2,7 +2,6 @@ plugins {
     id 'java'
     id 'jacoco'
     id 'info.solidsoft.pitest' version '1.6.0'
-    id "org.sonarqube" version "3.1.1"
     id "com.github.ben-manes.versions" version "0.38.0"
 }
 
@@ -41,25 +40,34 @@ test {
     useJUnitPlatform()
 }
 
-sonarqube {
-    properties {
-        property "sonar.projectName", "kata-template"
-        property "sonar.coverage.jacoco.xmlReportPaths", "$buildDir/reports/jacoco/report.xml"
-    }
-}
-
-
 apply plugin: 'com.github.ben-manes.versions'
 
 // To disallow release candidates as upgradable versions
-dependencyUpdates.resolutionStrategy {
-    componentSelection { rules ->
-        rules.all { ComponentSelection selection ->
-            boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'preview'].any { qualifier ->
-                selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
-            }
-            if (rejected) {
-                selection.reject('Release candidate')
+def isNonStable = { String version ->
+    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
+    def regex = /^[0-9,.v-]+(-r)?$/
+    return !stableKeyword && !(version ==~ regex)
+}
+
+tasks.named("dependencyUpdates").configure {
+    checkForGradleUpdate = true
+
+    // Reject all non stable versions
+    rejectVersionIf {
+        isNonStable(candidate.version)
+    }
+
+    // Disallow release candidates as upgradable versions from stable versions
+    rejectVersionIf {
+        isNonStable(candidate.version) && !isNonStable(currentVersion)
+    }
+
+    resolutionStrategy {
+        componentSelection {
+            all {
+                if (isNonStable(candidate.version) && !isNonStable(currentVersion)) {
+                    reject('Release candidate')
+                }
             }
         }
     }
