@@ -4,7 +4,7 @@
   "description": "",
   "main": "app/kata/index.js",
   "scripts": {
-    "test": "mocha 'test/**/*Test.js'",
+    "test": "mocha --parallel --watch 'test/**/*Test.js'",
     "test-with-coverage": "nyc mocha 'test/**/*Test.js'"
   },
   "type": "module",
