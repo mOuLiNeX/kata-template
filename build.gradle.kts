@@ -3,11 +3,14 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionSelectorScheme
 
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+
 plugins {
-    kotlin("jvm") version "1.4.21"
+    kotlin("jvm") version "1.4.32"
     application
     jacoco
-    id("info.solidsoft.pitest") version "1.5.2"
+    id("info.solidsoft.pitest") version "1.6.0"
+    id("com.github.ben-manes.versions") version "0.38.0"
 }
 
 group = "kata"
@@ -66,6 +69,37 @@ configurations {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+// To disallow release candidates as upgradable versions
+fun String.isNonStable(): Boolean {
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { toUpperCase().contains(it) }
+    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+    val isStable = stableKeyword || regex.matches(this)
+    return isStable.not()
+}
+
+tasks.withType<DependencyUpdatesTask> {
+
+    // Reject all non stable versions
+    rejectVersionIf {
+        candidate.version.isNonStable()
+    }
+
+    // Disallow release candidates as upgradable versions from stable versions
+    rejectVersionIf {
+        candidate.version.isNonStable() && !currentVersion.isNonStable()
+    }
+
+    resolutionStrategy {
+        componentSelection {
+            all {
+                if (candidate.version.isNonStable() && !currentVersion.isNonStable()) {
+                    reject("Release candidate")
                 }
             }
         }
